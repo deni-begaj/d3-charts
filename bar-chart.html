@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Bar Chart with Tooltips in D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      /* Define your CSS styles here */
+      .bar {
+        fill: url(#barGradient);
+      }
+
+      .tooltip {
+        position: absolute;
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+        padding: 10px;
+        font-size: 12px;
+        pointer-events: none;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chart-container"></div>
+    <div class="tooltip"></div>
+
+    <script>
+      // Define your data
+      const data = [25, 35, 20, 15, 40];
+
+      // Set up the chart dimensions
+      const width = 400;
+      const height = 300;
+      const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+
+      // Create an SVG element
+      const svg = d3.select("#chart-container")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      // Define a linear gradient for the fill
+      const defs = svg.append("defs");
+      const gradient = defs.append("linearGradient")
+        .attr("id", "barGradient")
+        .attr("x1", "0%")
+        .attr("x2", "100%")
+        .attr("y1", "0%")
+        .attr("y2", "0%");
+      gradient.append("stop")
+        .attr("offset", "0%")
+        .style("stop-color", "#FF5733"); // Start color
+      gradient.append("stop")
+        .attr("offset", "100%")
+        .style("stop-color", "#33FF57"); // End color
+
+      // Create a group element for the chart
+      const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Define x and y scales
+      const xScale = d3.scaleBand()
+        .domain(data.map((d, i) => i))
+        .range([0, width - margin.left - margin.right])
+        .padding(0.1);
+
+      const yScale = d3.scaleLinear()
+        .domain([0, d3.max(data)])
+        .nice()
+        .range([height - margin.top - margin.bottom, 0]);
+
+      // Create and append bars with custom colors and tooltips
+      chart.selectAll(".bar")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", (d, i) => xScale(i))
+        .attr("y", d => yScale(d))
+        .attr("width", xScale.bandwidth())
+        .attr("height", d => yScale(0) - yScale(d))
+        .on("mouseover", showTooltip)
+        .on("mouseout", hideTooltip);
+
+      // Add axes
+      chart.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${height - margin.top - margin.bottom})`)
+        .call(d3.axisBottom(xScale));
+
+      chart.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(yScale).ticks(5));
+
+      // Define the tooltip
+      const tooltip = d3.select(".tooltip");
+
+      function showTooltip(d) {
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 1);
+        tooltip.html(`Value: ${d}`)
+          .style("left", (d3.event.pageX + 10) + "px")
+          .style("top", (d3.event.pageY - 30) + "px");
+      }
+
+      function hideTooltip() {
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 0);
+      }
+
+    </script>
+  </body>
+</html>

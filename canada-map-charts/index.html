@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Canada Covid 19 Stats</title>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="https://d3js.org/d3-array.v2.min.js"></script>
+	<script src="https://d3js.org/d3-geo.v2.min.js"></script>
+	<script src="https://d3js.org/d3-selection.v2.min.js"></script>
+	<script src="https://d3js.org/d3-drag.v2.min.js"></script>
+	<script src="https://d3js.org/d3-zoom.v2.min.js"></script>
+	<script src="https://d3js.org/d3-transition.v2.min.js"></script>
+	<style>
+		body {
+			margin: 0;
+			position: fixed;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			left: 0;
+		}
+
+		.py-1 {
+			padding-top: 10px;
+			padding-bottom: 10px;
+		}
+
+		.pb-1 {
+			padding-bottom: 10px;
+		}
+
+		.pt-1 {
+			padding-top: 10px;
+		}
+
+		.container {
+			width: 100%;
+			height: 100%;
+		}
+
+		.no-fill {
+			fill-opacity: 0;
+		}
+
+		.no-opacity {
+			opacity: 0;
+		}
+
+		.heading {
+			width: 100%;
+		}
+
+		.title-container {
+			width: 100%;
+			text-align: center;
+		}
+
+		.heading-container {
+			margin: 0 10px;
+		}
+
+	</style>
+</head>
+
+<body>
+
+	<!-- Headings and text for page -->
+	<div class="heading">
+		<div class="heading-container">
+			<h2 class="pb-1">COMP 4304/6774 Assignment 6</h2>
+			<p class="pb-1">By E. Brown</p>
+			<h2>Attribution</h2>
+			<p class="pb-1">Data is taken from <a href="https://health-infobase.canada.ca/covid-19">https://health-infobase.canada.ca/covid-19</a>.
+				The code ideas for wrangling the data by pivoting rows to columns is taken from http://jonathansoma.com/tutorials/d3/wide-vs-long-data/
+			</p>
+			<h2>Solution</h2>
+		</div>
+		<div class="title-container">
+			<h2 class="pb-1">Total Covid Cases In Canada, Jan-Oct 2020</h2>
+			<h2 id="selected-entity">Canada</h2>
+		</div>
+
+
+	</div>
+
+	<!-- Svg Container -->
+	<div id="svg-container"></div>
+
+
+	<script>
+		/** Main configuration variables. */
+		const margin = { top: 20, right: 20, bottom: 30, left: 50 },
+			  width  = 1900 - margin.left - margin.right,
+			  height = 750 - margin.top - margin.bottom,
+			  colors = [ '#CAD2C5', '#9EB7E5', '#FF6F59', '#3A606E', '#A18276', '#E1CA96', '#8DB38B', '#BC8DA7', '#91CB3E', '#5D2A42', '#1C5D99', '#FFB20F', '#639FAB' ],
+			  noStates = 13,
+			  d = 450;
+
+
+		/** Global functions. */
+		
+		/** When clicking state from map, highlight state and its chart. */
+		const selectedStateFromMap = function(d, states) {
+			const state = states.filter(e => e.name === d.currentTarget.attributes.prname.value)[0];
+			_selectedStateFromMap(state);
+			selectStateChartFromMap(state);
+			event.stopPropagation();
+		};
+
+		/** When clicking state from map, highlight state and hide other states. */
+		const _selectedStateFromMap = function(state) {
+			d3.selectAll('.state').classed('no-fill', true);
+			d3.select('.' + state.code).classed('no-fill', false);
+			d3.select('#selected-entity').node().innerHTML = state.name;
+		};
+
+		/** When clicking outside, restore color to all states. */
+		const resetStateColors = function() {
+			d3.selectAll('.state').classed('no-fill', false);
+			toggleStackedChart(true);
+			toggleCharts(null, false);
+			d3.select('#selected-entity').node().innerHTML = 'Canada';
+		};
+
+		/** Toggles stacked chart visibility via a boolean. */
+		const toggleStackedChart = function(bool) {
+			d3.selectAll('.m-x-axis').transition().duration(d).style('opacity', !bool ? 0 : 1);
+			d3.selectAll('.m-y-axis').transition().duration(d).style('opacity', !bool ? 0 : 1);
+			d3.selectAll('.m-chart-path').transition().duration(d).style('fill-opacity', !bool ? 0 : 1);
+		};
+
+		/** Toggles stacked chart visibility via a boolean. If 'code' provided, will only toggle one chart. */
+		const toggleCharts = function(code, bool) {
+			const codeClass = code ? '.' + code : '';
+			d3.selectAll(codeClass + '.x-axis').transition().duration(d).style('opacity', !bool ? 0 : 1);
+			d3.selectAll(codeClass + '.y-axis').transition().duration(d).style('opacity', !bool ? 0 : 1);
+			d3.selectAll(codeClass + '.chart-path').transition().duration(d).style('fill-opacity', !bool ? 0 : 1);
+		}
+
+		/** Selects state chart, when state is clicked from the map. */
+		const selectStateChartFromMap = function(state) {
+			/** Hide all other state charts */
+			toggleCharts(null, false);
+			/** Hide stacked chart too */
+			toggleStackedChart(false);
+			/** Show the clicked state chart only */
+			toggleCharts(state.code, true);
+		}
+
+		/** Selects state chart, when state is clicked from the stacked chart. */
+		const selectedStateOfChartFromChart = function(state) {
+			selectStateChartFromMap(state);
+			_selectedStateFromMap(state);
+			event.stopPropagation();
+		}
+
+
+
+		/** Main SVG is being created here. */
+		const svg = d3.select("#svg-container").append("svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.on('click', resetStateColors)
+			.style('fill', 'none')
+			.call(d3.zoom().on("zoom", function (e,a, s) {
+				svg.attr("transform", e.transform);
+				// svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")")
+			 }))
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+		let covidData = [];
+
+		/** On json+csv load, draw all svgs. */
+		d3.json("canada.json", (json) => {
+			d3.csv("covid19.csv", (csv) => {
+
+				/** Both data files are loaded */
+
+				/** We maintain an array of unique states with colors, code and name. */
+				const states = json.features.map(e => ({ name: e.properties.NAME, code: e.properties.CODE, color: colors.pop()}) );
+
+				/** Create projection for drawing Canada map */
+				const projection = d3.geoMercator()
+					.scale(253)
+					.translate([width / 4, height])
+					.rotate([90, 0, 0]);
+					const path = d3.geoPath().projection(projection);
+
+				/** Appednign the Canada drawn map onto the svg */
+				svg.selectAll("path")
+						.data(json.features)
+					.enter().append("path")
+						.attr("d", path)
+						.attr("class", (d) => "state " + d.properties.CODE)
+						.attr("prname", (d) => d.properties.NAME)
+						.on('click', (d) => selectedStateFromMap(d, states))
+						.attr("fill", (d, i)=> states.filter(e => e.code === d.properties.CODE)[0].color)
+						.attr("stroke", '#999');
+
+				/** Lookup the csv and bind the 'pruid' with the states saved previously */
+				csv = csv.filter(e => e.prname !== 'Canada');
+				csv.forEach((el, i) => {
+					const ind = states.map(e => e.name).indexOf(el.prname);
+					if (ind !== -1) { states[ind].pruid = el.pruid; }
+				});
+
+				/** Format the csv 'date' field, and construct smaller efficient objects. */
+				covidData = csv.map(e => {
+					const date = d3.timeParse("%d-%m-%Y")(e.date) === null ? d3.timeParse("%d/%m/%Y") : d3.timeParse("%d-%m-%Y")(e.date);
+					return { pruid: e.pruid, date: date, value: Number(e.numtotal), month: new Date(date).getMonth() };
+				});
+
+				/** Area chart configuration go here */
+				const chartWidth  = 500, chartHeight = 300, chartX = 1100, chartY = 400;
+
+				/** For each state in the state list draw the area graph. */
+				for (const state of states) {
+
+					/** We filter covid data for one state only */
+					const covidDataForState = covidData.filter(e => e.pruid === state.pruid);
+					
+					/** Add X axis */
+					const x = d3.scaleTime()
+						.domain(d3.extent(covidDataForState, (d) => d.date))
+						.range([ 0, chartWidth ]);
+					svg.append("g")
+						.attr("transform", `translate(${chartX}, ${chartY})`)
+						.attr("class", "x-axis no-opacity " + state.code)
+						.call(d3.axisBottom(x));
+	
+					/** Add Y axis */
+					const y = d3.scaleLinear()
+						.domain([0, d3.max(covidDataForState, (d) => +d.value)])
+						.range([ chartHeight, 0 ]);
+					svg.append("g")
+						.attr("transform", `translate(${chartX + chartWidth}, ${chartY - chartHeight})`)
+						.attr("class", "y-axis no-opacity " + state.code)
+						.call(d3.axisRight(y));
+	
+					/** Add the area */
+					svg.append("path")
+						.datum(covidDataForState)
+						.attr("transform", `translate(${chartX}, ${chartY - chartHeight})`)
+						.attr("fill", state.color)
+						//.attr("stroke", "#69b3a2")
+						.attr("class", "chart-path no-fill " + state.code)
+						.attr("stroke-width", 1.5)
+						.attr("d", d3.area()
+							.x((d) => x(d.date))
+							.y0(y(0))
+							.y1((d) => y(d.value))
+						);
+				}
+
+
+				const data = [];
+				for (let i = 0; i < 10; i++) {
+					const allProvincesForOneMonth = covidData.filter(e => e.month === i);
+					let monthObj = { month: new Date(2020, i, 1) };
+					for (const state of states) {
+						const oneProvinceForOneMonth = allProvincesForOneMonth.filter(e => e.pruid === state.pruid);
+						monthObj[state.name] = d3.max(oneProvinceForOneMonth.map(e => e.value)) || 0;
+					}
+					data.push(monthObj);
+				}
+
+				const stackedData = d3.stack().keys(states.map(e => e.name))(data);
+
+				/** Add X axis */
+				const x = d3.scaleTime()
+					.domain(d3.extent(data, (d) => d.month))
+					.range([ 0, chartWidth ]);
+				svg.append("g")
+					.attr("transform", `translate(${chartX}, ${chartY})`)
+					.attr("class", "m-x-axis")
+					.call(d3.axisBottom(x));
+
+				/** Add Y axis */
+				const y = d3.scaleLinear()
+					.domain([0, 250000])
+					.range([ chartHeight, 0 ]);
+				svg.append("g")
+					.attr("transform", `translate(${chartX + chartWidth}, ${chartY - chartHeight})`)
+					.attr("class", "m-y-axis")
+					.call(d3.axisRight(y));
+
+				/** Add color function. */
+				const colorScale = d3.scaleOrdinal()
+					.domain(states.map(e => e.name))
+					.range(states.map(e => e.color));
+				
+
+				/** Draw the stacked area graph. */
+				svg.selectAll("mylayers")
+					.data(stackedData)
+					.enter()
+						.append("path")
+						.attr("class", "m-chart-path")
+						.on('click', (d) => {
+							const state = states.filter(e => e.name === d.key)[0];
+							selectedStateOfChartFromChart(state);
+						})
+						.attr("transform", `translate(${chartX}, ${chartY - chartHeight})`)
+						.style("fill", (d) => colorScale(d.key))
+						.attr("d", d3.area()
+							.x((d) => x(d.data.month))
+							.y0((d) => y(d[0]) )
+							.y1((d) => y(d[1]) )
+						)
+
+			});
+
+		});
+
+
+	</script>
+</body>

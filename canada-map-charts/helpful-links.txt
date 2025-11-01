@@ -1,0 +1,16 @@
+The below links were found helpful for carrying out this assignment:
+
+
+http://bl.ocks.org/michellechandra/0b2ce4923dc9b5809922
+
+https://datawanderings.com/2018/10/28/making-a-map-in-d3-js-v-5/
+
+https://www.d3-graph-gallery.com/graph/area_basic.html
+
+http://bl.ocks.org/anaeliaovalle/e57763e85def2a95be931c69eff6bfa6
+
+http://using-d3js.com/05_06_stacks.html
+
+https://www.d3-graph-gallery.com/graph/stackedarea_basic.html
+
+https://github.com/d3/d3-transition
