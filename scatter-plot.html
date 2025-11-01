@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Scatter Plot with D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .back-button {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: white;
+        color: #667eea;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      .back-button::before {
+        content: '←';
+        font-size: 18px;
+      }
+
+      .chart-wrapper {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        margin-top: 80px;
+      }
+
+      .tooltip {
+        position: absolute;
+        background-color: rgba(45, 55, 72, 0.95);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 12px;
+        pointer-events: none;
+        opacity: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .dot {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" class="back-button">Back to Charts</a>
+    <div class="chart-wrapper">
+      <div id="chart-container"></div>
+    </div>
+    <div class="tooltip"></div>
+
+    <script>
+      // Generate sample scatter plot data
+      const data = [];
+      for (let i = 0; i < 50; i++) {
+        data.push({
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+          category: Math.floor(Math.random() * 3)
+        });
+      }
+
+      // Set up the chart dimensions
+      const width = 700;
+      const height = 450;
+      const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+
+      // Create an SVG element
+      const svg = d3.select("#chart-container")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      // Create a group element for the chart
+      const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Define scales
+      const xScale = d3.scaleLinear()
+        .domain([0, 100])
+        .range([0, width - margin.left - margin.right]);
+
+      const yScale = d3.scaleLinear()
+        .domain([0, 100])
+        .range([height - margin.top - margin.bottom, 0]);
+
+      // Create color scale
+      const color = d3.scaleOrdinal()
+        .domain([0, 1, 2])
+        .range(['#667eea', '#764ba2', '#9f7aea']);
+
+      // Add dots
+      chart.selectAll(".dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "dot")
+        .attr("cx", d => xScale(d.x))
+        .attr("cy", d => yScale(d.y))
+        .attr("r", 6)
+        .attr("fill", d => color(d.category))
+        .attr("opacity", 0.7)
+        .attr("stroke", "white")
+        .attr("stroke-width", 1.5)
+        .on("mouseover", function(event, d) {
+          showTooltip(event, d);
+          d3.select(this)
+            .transition()
+            .duration(200)
+            .attr("r", 10)
+            .attr("opacity", 1);
+        })
+        .on("mouseout", function() {
+          hideTooltip();
+          d3.select(this)
+            .transition()
+            .duration(200)
+            .attr("r", 6)
+            .attr("opacity", 0.7);
+        });
+
+      // Add axes
+      chart.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${height - margin.top - margin.bottom})`)
+        .call(d3.axisBottom(xScale).ticks(10));
+
+      chart.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(yScale).ticks(10));
+
+      // Add axis labels
+      chart.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x", 0 - (height - margin.top - margin.bottom) / 2)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("fill", "#2d3748")
+        .style("font-weight", "500")
+        .text("Y Value");
+
+      chart.append("text")
+        .attr("transform", `translate(${(width - margin.left - margin.right) / 2}, ${height - margin.top - margin.bottom + 35})`)
+        .style("text-anchor", "middle")
+        .style("fill", "#2d3748")
+        .style("font-weight", "500")
+        .text("X Value");
+
+      // Add legend
+      const legend = svg.append("g")
+        .attr("transform", `translate(${width - 120}, 20)`);
+
+      const categories = ['Category 1', 'Category 2', 'Category 3'];
+      const legendItems = legend.selectAll(".legend-item")
+        .data(categories)
+        .enter()
+        .append("g")
+        .attr("class", "legend-item")
+        .attr("transform", (d, i) => `translate(0, ${i * 25})`);
+
+      legendItems.append("circle")
+        .attr("r", 6)
+        .attr("fill", (d, i) => color(i))
+        .attr("cx", 8);
+
+      legendItems.append("text")
+        .attr("x", 20)
+        .attr("y", 4)
+        .style("font-size", "12px")
+        .style("fill", "#2d3748")
+        .text(d => d);
+
+      // Define the tooltip
+      const tooltip = d3.select(".tooltip");
+
+      function showTooltip(event, d) {
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 1);
+        tooltip.html(`Category: ${d.category + 1}<br/>X: ${d.x.toFixed(2)}<br/>Y: ${d.y.toFixed(2)}`)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 30) + "px");
+      }
+
+      function hideTooltip() {
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 0);
+      }
+    </script>
+  </body>
+</html>
+

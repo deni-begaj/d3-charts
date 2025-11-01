@@ -20,12 +20,9 @@
 		body {
 			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-			position: fixed;
-			top: 0;
-			right: 0;
-			bottom: 0;
-			left: 0;
-			overflow: auto;
+			position: relative;
+			min-height: 100vh;
+			overflow-x: hidden;
 		}
 
 		.back-button {
@@ -92,6 +89,7 @@
 
 		.title-container {
 			width: 100%;
+			padding: 10px;
 			text-align: center;
 			color: #2d3748;
 		}
@@ -128,6 +126,20 @@
 			border-radius: 12px;
 			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 			padding: 20px;
+			overflow: auto;
+			max-width: 100%;
+		}
+
+		#svg-container svg {
+			max-width: 100%;
+			height: auto;
+		}
+
+		@media (max-width: 1200px) {
+			#svg-container {
+				padding: 10px;
+				margin: 10px;
+			}
 		}
 
 	</style>
@@ -139,8 +151,6 @@
 	<!-- Headings and text for page -->
 	<div class="heading">
 		<div class="heading-container">
-			<h2 class="pb-1">COMP 4304/6774 Assignment 6</h2>
-			<p class="pb-1">By E. Brown</p>
 			<h2>Attribution</h2>
 			<p class="pb-1">Data is taken from <a href="https://health-infobase.canada.ca/covid-19">https://health-infobase.canada.ca/covid-19</a>.
 				The code ideas for wrangling the data by pivoting rows to columns is taken from http://jonathansoma.com/tutorials/d3/wide-vs-long-data/
@@ -161,12 +171,14 @@
 
 	<script>
 		/** Main configuration variables. */
-		const margin = { top: 20, right: 20, bottom: 30, left: 50 },
-			  width  = 1900 - margin.left - margin.right,
-			  height = 750 - margin.top - margin.bottom,
-			  colors = [ '#CAD2C5', '#9EB7E5', '#FF6F59', '#3A606E', '#A18276', '#E1CA96', '#8DB38B', '#BC8DA7', '#91CB3E', '#5D2A42', '#1C5D99', '#FFB20F', '#639FAB' ],
-			  noStates = 13,
-			  d = 450;
+		const margin = { top: 20, right: 20, bottom: 30, left: 50 };
+		// Make width responsive - use container width or max 1900px
+		const containerWidth = Math.min(window.innerWidth - 80, 1900);
+		const width  = containerWidth - margin.left - margin.right;
+		const height = 750 - margin.top - margin.bottom;
+		const colors = [ '#CAD2C5', '#9EB7E5', '#FF6F59', '#3A606E', '#A18276', '#E1CA96', '#8DB38B', '#BC8DA7', '#91CB3E', '#5D2A42', '#1C5D99', '#FFB20F', '#639FAB' ];
+		const noStates = 13;
+		const d = 450;
 
 
 		/** Global functions. */
@@ -229,17 +241,22 @@
 
 
 		/** Main SVG is being created here. */
-		const svg = d3.select("#svg-container").append("svg")
+		const svgElement = d3.select("#svg-container").append("svg")
 			.attr("width", width + margin.left + margin.right)
-			.attr("height", height + margin.top + margin.bottom)
+			.attr("height", width > 1400 ? height + margin.top + margin.bottom : height + margin.top + margin.bottom + 400)
+			.attr("viewBox", `0 0 ${width + margin.left + margin.right} ${width > 1400 ? height + margin.top + margin.bottom : height + margin.top + margin.bottom + 400}`)
+			.attr("preserveAspectRatio", "xMidYMid meet")
+			.style("max-width", "100%")
+			.style("height", "auto")
 			.on('click', resetStateColors)
-			.style('fill', 'none')
-			.call(d3.zoom().on("zoom", function (e,a, s) {
-				svg.attr("transform", e.transform);
-				// svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")")
-			 }))
-			.append("g")
+			.style('fill', 'none');
+		
+		const svg = svgElement.append("g")
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+		svgElement.call(d3.zoom().on("zoom", function (event) {
+			svg.attr("transform", event.transform.toString() + " translate(" + margin.left + "," + margin.top + ")");
+		}));
 
 
 		let covidData = [];
@@ -285,7 +302,11 @@
 				});
 
 				/** Area chart configuration go here */
-				const chartWidth  = 500, chartHeight = 300, chartX = 1100, chartY = 400;
+				// Make chart position responsive - if screen is small, put chart below map
+				const chartWidth  = Math.min(500, width * 0.4);
+				const chartHeight = 300;
+				const chartX = width > 1400 ? width * 0.6 : (width - chartWidth) / 2;
+				const chartY = width > 1400 ? 400 : height + 150;
 
 				/** For each state in the state list draw the area graph. */
 				for (const state of states) {
@@ -340,12 +361,16 @@
 
 				const stackedData = d3.stack().keys(states.map(e => e.name))(data);
 
+				// Use same responsive positioning for stacked chart
+				const stackedChartX = chartX;
+				const stackedChartY = chartY;
+
 				/** Add X axis */
 				const x = d3.scaleTime()
 					.domain(d3.extent(data, (d) => d.month))
 					.range([ 0, chartWidth ]);
 				svg.append("g")
-					.attr("transform", `translate(${chartX}, ${chartY})`)
+					.attr("transform", `translate(${stackedChartX}, ${stackedChartY})`)
 					.attr("class", "m-x-axis")
 					.call(d3.axisBottom(x));
 
@@ -354,7 +379,7 @@
 					.domain([0, 250000])
 					.range([ chartHeight, 0 ]);
 				svg.append("g")
-					.attr("transform", `translate(${chartX + chartWidth}, ${chartY - chartHeight})`)
+					.attr("transform", `translate(${stackedChartX + chartWidth}, ${stackedChartY - chartHeight})`)
 					.attr("class", "m-y-axis")
 					.call(d3.axisRight(y));
 
@@ -374,7 +399,7 @@
 							const state = states.filter(e => e.name === d.key)[0];
 							selectedStateOfChartFromChart(state);
 						})
-						.attr("transform", `translate(${chartX}, ${chartY - chartHeight})`)
+						.attr("transform", `translate(${stackedChartX}, ${stackedChartY - chartHeight})`)
 						.style("fill", (d) => colorScale(d.key))
 						.attr("d", d3.area()
 							.x((d) => x(d.data.month))

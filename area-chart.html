@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Area Chart with D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .back-button {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: white;
+        color: #667eea;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      .back-button::before {
+        content: '←';
+        font-size: 18px;
+      }
+
+      .chart-wrapper {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        margin-top: 80px;
+      }
+
+      .tooltip {
+        position: absolute;
+        background-color: rgba(45, 55, 72, 0.95);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 12px;
+        pointer-events: none;
+        opacity: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .area {
+        opacity: 0.8;
+      }
+
+      .line {
+        fill: none;
+        stroke-width: 2;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" class="back-button">Back to Charts</a>
+    <div class="chart-wrapper">
+      <div id="chart-container"></div>
+    </div>
+    <div class="tooltip"></div>
+
+    <script>
+      // Sample time series data
+      const data = [
+        { date: new Date(2020, 0, 1), value: 30 },
+        { date: new Date(2020, 1, 1), value: 45 },
+        { date: new Date(2020, 2, 1), value: 35 },
+        { date: new Date(2020, 3, 1), value: 55 },
+        { date: new Date(2020, 4, 1), value: 48 },
+        { date: new Date(2020, 5, 1), value: 65 },
+        { date: new Date(2020, 6, 1), value: 58 },
+        { date: new Date(2020, 7, 1), value: 72 },
+        { date: new Date(2020, 8, 1), value: 68 },
+        { date: new Date(2020, 9, 1), value: 80 },
+        { date: new Date(2020, 10, 1), value: 75 },
+        { date: new Date(2020, 11, 1), value: 90 }
+      ];
+
+      // Set up the chart dimensions
+      const width = 800;
+      const height = 400;
+      const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+
+      // Create an SVG element
+      const svg = d3.select("#chart-container")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      // Create a group element for the chart
+      const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Define scales
+      const xScale = d3.scaleTime()
+        .domain(d3.extent(data, d => d.date))
+        .range([0, width - margin.left - margin.right]);
+
+      const yScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.value) * 1.1])
+        .nice()
+        .range([height - margin.top - margin.bottom, 0]);
+
+      // Create gradient for the area
+      const defs = svg.append("defs");
+      const gradient = defs.append("linearGradient")
+        .attr("id", "areaGradient")
+        .attr("x1", "0%")
+        .attr("y1", "0%")
+        .attr("x2", "0%")
+        .attr("y2", "100%");
+      gradient.append("stop")
+        .attr("offset", "0%")
+        .style("stop-color", "#667eea")
+        .style("stop-opacity", 0.8);
+      gradient.append("stop")
+        .attr("offset", "100%")
+        .style("stop-color", "#764ba2")
+        .style("stop-opacity", 0.3);
+
+      // Create area generator
+      const area = d3.area()
+        .x(d => xScale(d.date))
+        .y0(height - margin.top - margin.bottom)
+        .y1(d => yScale(d.value))
+        .curve(d3.curveMonotoneX);
+
+      // Create line generator
+      const line = d3.line()
+        .x(d => xScale(d.date))
+        .y(d => yScale(d.value))
+        .curve(d3.curveMonotoneX);
+
+      // Draw the area
+      chart.append("path")
+        .datum(data)
+        .attr("class", "area")
+        .attr("d", area)
+        .attr("fill", "url(#areaGradient)");
+
+      // Draw the line
+      chart.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("d", line)
+        .attr("stroke", "#667eea")
+        .attr("stroke-width", 2.5);
+
+      // Add dots
+      chart.selectAll(".dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "dot")
+        .attr("cx", d => xScale(d.date))
+        .attr("cy", d => yScale(d.value))
+        .attr("r", 4)
+        .attr("fill", "#667eea")
+        .attr("stroke", "white")
+        .attr("stroke-width", 2)
+        .on("mouseover", function(event, d) {
+          showTooltip(event, d);
+          d3.select(this)
+            .attr("r", 7)
+            .attr("fill", "#764ba2");
+        })
+        .on("mouseout", function() {
+          hideTooltip();
+          d3.select(this)
+            .attr("r", 4)
+            .attr("fill", "#667eea");
+        });
+
+      // Add axes
+      chart.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${height - margin.top - margin.bottom})`)
+        .call(d3.axisBottom(xScale).ticks(6).tickFormat(d3.timeFormat("%b %Y")));
+
+      chart.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(yScale).ticks(6));
+
+      // Add axis labels
+      chart.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x", 0 - (height - margin.top - margin.bottom) / 2)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("fill", "#2d3748")
+        .style("font-weight", "500")
+        .text("Value");
+
+      chart.append("text")
+        .attr("transform", `translate(${(width - margin.left - margin.right) / 2}, ${height - margin.top - margin.bottom + 35})`)
+        .style("text-anchor", "middle")
+        .style("fill", "#2d3748")
+        .style("font-weight", "500")
+        .text("Date");
+
+      // Define the tooltip
+      const tooltip = d3.select(".tooltip");
+
+      function showTooltip(event, d) {
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 1);
+        tooltip.html(`Date: ${d3.timeFormat("%B %Y")(d.date)}<br/>Value: ${d.value}`)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 30) + "px");
+      }
+
+      function hideTooltip() {
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 0);
+      }
+    </script>
+  </body>
+</html>
+
