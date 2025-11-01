@@ -8,37 +8,125 @@
 	<script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
 
 	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
 		body {
-			background-color: #242320;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+			padding: 20px;
+			position: relative;
+		}
+
+		.back-button {
+			position: fixed;
+			top: 20px;
+			left: 20px;
+			z-index: 1000;
+			background: white;
+			color: #667eea;
+			padding: 12px 24px;
+			border-radius: 8px;
+			text-decoration: none;
+			font-weight: 600;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+			transition: all 0.3s ease;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.back-button:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+		}
+
+		.back-button::before {
+			content: '←';
+			font-size: 18px;
+		}
+
+		.chart-header {
+			background: rgba(255, 255, 255, 0.95);
+			padding: 20px;
+			border-radius: 12px;
+			margin-bottom: 20px;
+			margin-top: 70px;
+			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 15px;
+		}
+
+		.pagetitle {
+			color: #2d3748;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			font-size: 24px;
+			font-weight: 700;
+			margin: 0;
+		}
+
+		.tabbutton {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			font-weight: 600;
+			font-size: 16px;
+			border: none;
+			outline: none;
+			cursor: pointer;
+			padding: 12px 24px;
+			border-radius: 8px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+			transition: all 0.3s ease;
+		}
+
+		.tabbutton:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+		}
+
+		.chart-container {
+			background: rgba(255, 255, 255, 0.95);
+			border-radius: 12px;
+			padding: 20px;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 		}
 
 		svg .street {
-			stroke: white;
-			stroke-width: 1px;
+			stroke: #4a5568;
+			stroke-width: 1.5px;
 			fill: none;
 		}
 		
 		svg .mapLabel {
 			font-family: sans-serif;
-			fill: white;
+			fill: #2d3748;
+			font-weight: 500;
 		}
 		
 		svg .pump {
 			fill: #0f75db;
-			stroke: black;
-			stroke-width: 0.8;
+			stroke: #1a365d;
+			stroke-width: 1;
 
 		}
 		
 		svg .death {
-			stroke: black;
-			stroke-width: 0.3;
+			stroke: #2d3748;
+			stroke-width: 0.5;
 			r: 2.7;
 		}
 		
 		svg .graphline {
 			fill: none;
-			stroke-width: 1.5px;
+			stroke-width: 2px;
 		}
 		
 		svg .deathhoverbar:hover {
@@ -59,33 +147,37 @@
 		.axis path,
 		.axis line {
 			fill: none;
-			stroke: white;
+			stroke: #4a5568;
 			shape-rendering: crispEdges;
+			stroke-width: 1.5px;
 		}
 
 		.axis text {
 			font-family: sans-serif;
 			font-size: 11.5px;
-			fill: white;
+			fill: #2d3748;
+			font-weight: 500;
 		}
 
 		.caption {
-			fill :  white;
+			fill: #2d3748;
+			font-weight: 500;
 		}
 		
 	</style>
 </head>
 <body>
-	<div>
-		<div class="pagetitle" style="float: left;">London's Cholera Epidemic, 1854 | Interactive Visualization Map</div>
-		<div style="float: right;">
-			<form>
-				<input class="tabbutton" type="button" value="Home" style="font-size: 26px;"
-				onclick="window.location.href='/'" />
-			</form>
-		</div>
-		<br/><br/>
-		<br> 
+	<a href="../index.html" class="back-button">Back to Charts</a>
+	
+	<div class="chart-header">
+		<div class="pagetitle">London's Cholera Epidemic, 1854 | Interactive Visualization Map</div>
+		<form>
+			<input class="tabbutton" type="button" value="Back to Map" onclick="window.location.href='index.html'" />
+		</form>
+	</div>
+
+	<div class="chart-container">
+		<div> 
 		
 
 		<svg id="map" width="50%" viewBox="0 0 550 550">
@@ -98,6 +190,7 @@
 			<text id='label' x='150' y='450' height = "10" class = "caption" style="font-family: 'Alice'; font-size: 14px;">August through September, 1854</text>
 		</svg>
 
+		</div>
 	</div>
 
 	
@@ -388,7 +481,7 @@
       		.attr("y", 0 - 5)
       		.attr("x", 0 - (graphHeight / 2))
       		.attr("dy", "1em")
-      		.attr("fill", "white")
+      		.attr("fill", "#2d3748")
       		.style("font", "12.1px times")
       		.style("text-anchor", "middle")	
       		.style("font-family", "Alice")
@@ -546,29 +639,37 @@
 					.attr('fill', 'white')
 					.style('pointer-events','none');
 
-			var barchart = d3.select("body")
-			.append("svg")
-		    .attr("id","barchart")
-    	    .attr("width", width + padding.left*2 + padding.right)
-        	.attr("height", height + padding.top + padding.bottom)
-        	.append("g")
-  			.attr("transform", 
-              "translate(" + padding.left*1.5 + "," + padding.top + ")");
-              var y1Scale = d3.scale.linear().range([height, 0]); 
-              var n = 6,
-				m = [ "0-10", "11-20", "21-40","41-60", "61-80", "above 80"];
-				var x0 = d3.scale.ordinal()
-    .domain(d3.range(n))
-    .rangeBands([0, width], .2);
-
-var x1 = d3.scale.ordinal()
-    .domain(d3.range(m))
-    .rangeBands([0, x0.rangeBand()]);    
-           
-//var x1Scale = d3.scale.linear().range([0, width]);
-var y1Scale = d3.scale.linear().range([height, 0]); 
-y1Scale.domain([0, d3.max(deaths, function(d) { return d.deaths; })]);
-
+			// Bar chart dimensions (commented out - incomplete bar chart code)
+			// var barChartWidth = 400;
+			// var barChartHeight = 300;
+			// var barChartPadding = {
+			// 	top: 20,
+			// 	right: 20,
+			// 	bottom: 30,
+			// 	left: 40
+			// };
+			// 
+			// var barchart = d3.select("body")
+			// 	.append("svg")
+			// 	.attr("id","barchart")
+			// 	.attr("width", barChartWidth + barChartPadding.left + barChartPadding.right)
+			// 	.attr("height", barChartHeight + barChartPadding.top + barChartPadding.bottom)
+			// 	.append("g")
+			// 	.attr("transform", 
+			// 		"translate(" + barChartPadding.left*1.5 + "," + barChartPadding.top + ")");
+			// 
+			// var n = 6,
+			// 	m = [ "0-10", "11-20", "21-40","41-60", "61-80", "above 80"];
+			// var x0 = d3.scale.ordinal()
+			// 	.domain(d3.range(n))
+			// 	.rangeBands([0, barChartWidth], .2);
+			// 
+			// var x1 = d3.scale.ordinal()
+			// 	.domain(d3.range(m))
+			// 	.rangeBands([0, x0.rangeBand()]);    
+			// 
+			// var y1Scale = d3.scale.linear().range([barChartHeight, 0]); 
+			// y1Scale.domain([0, d3.max(deaths, function(d) { return d.total || 0; })]);
 
 			}
 		}		

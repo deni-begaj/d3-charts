@@ -5,11 +5,65 @@
     <title>Vertically Stacked Bar Chart with D3.js</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-      /* Define your CSS styles here */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .back-button {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: white;
+        color: #667eea;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      .back-button::before {
+        content: '←';
+        font-size: 18px;
+      }
+
+      .chart-wrapper {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        margin-top: 80px;
+      }
     </style>
   </head>
   <body>
-    <div id="chart-container"></div>
+    <a href="index.html" class="back-button">Back to Charts</a>
+    <div class="chart-wrapper">
+      <div id="chart-container"></div>
+    </div>
 
     <script>
       // Define your data
@@ -34,6 +88,24 @@
       const chart = svg.append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
+      // Prepare data for stacking - reshape to work with d3.stack()
+      const keys = ['Value 1', 'Value 2', 'Value 3'];
+      const dataFormatted = data.map(d => {
+        const obj = { category: d.category };
+        d.values.forEach((val, i) => {
+          obj[keys[i]] = val;
+        });
+        return obj;
+      });
+
+      // Create stack generator
+      const stack = d3.stack()
+        .keys(keys)
+        .order(d3.stackOrderNone)
+        .offset(d3.stackOffsetNone);
+
+      const stackedData = stack(dataFormatted);
+
       // Define x and y scales
       const xScale = d3.scaleBand()
         .domain(data.map(d => d.category))
@@ -41,30 +113,31 @@
         .padding(0.1);
 
       const yScale = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d3.max(d.values))])
+        .domain([0, d3.max(dataFormatted, d => 
+          keys.reduce((sum, key) => sum + d[key], 0)
+        )])
         .nice()
         .range([height - margin.top - margin.bottom, 0]);
 
       // Create color scale
       const color = d3.scaleOrdinal()
-        .domain([0, 1, 2])
+        .domain(keys)
         .range(d3.schemeCategory10);
 
       // Create and append stacked bars
-      chart.selectAll(".bar")
-        .data(data)
+      chart.selectAll(".bar-group")
+        .data(stackedData)
         .enter()
         .append("g")
-        .attr("fill", (d, i) => color(i))
+        .attr("fill", d => color(d.key))
         .selectAll("rect")
-        .data(d => d.values)
+        .data(d => d)
         .enter()
         .append("rect")
-        .attr("x", d => xScale(d.category))
+        .attr("x", d => xScale(d.data.category))
         .attr("y", d => yScale(d[1]))
-        .attr("hi", d => 'ho')
-        .attr("width", xScale.bandwidth() - 1)
-        .attr("height", d => yScale(d.values[0]) - yScale(d.values[1]));
+        .attr("width", xScale.bandwidth())
+        .attr("height", d => yScale(d[0]) - yScale(d[1]));
 
       // Add axes
       chart.append("g")

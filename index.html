@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js Charts Collection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .chart-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #2d3748;
+        }
+
+        .chart-description {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .chart-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #edf2f7;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #667eea;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .chart-link {
+            margin-top: 1rem;
+            display: inline-flex;
+            align-items: center;
+            color: #667eea;
+            font-weight: 500;
+            text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .chart-card:hover .chart-link {
+            transform: translateX(5px);
+        }
+
+        .chart-link::after {
+            content: '→';
+            margin-left: 0.5rem;
+            transition: transform 0.2s ease;
+        }
+
+        .chart-card:hover .chart-link::after {
+            transform: translateX(3px);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header p {
+                font-size: 1rem;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 D3.js Charts Collection</h1>
+            <p>Interactive data visualizations built with D3.js</p>
+        </header>
+
+        <div class="charts-grid">
+            <a href="bar-chart.html" class="chart-card">
+                <div class="chart-icon">📊</div>
+                <h2 class="chart-title">Bar Chart</h2>
+                <p class="chart-description">
+                    A classic bar chart with gradient fills and interactive tooltips. 
+                    Hover over bars to see detailed values.
+                </p>
+                <span class="chart-tag">Basic</span>
+                <div class="chart-link">View Chart</div>
+            </a>
+
+            <a href="stacked-bar-chart.html" class="chart-card">
+                <div class="chart-icon">📈</div>
+                <h2 class="chart-title">Stacked Bar Chart</h2>
+                <p class="chart-description">
+                    Horizontal stacked bar chart displaying multiple data series 
+                    grouped by category. Perfect for comparing compositions.
+                </p>
+                <span class="chart-tag">Stacked</span>
+                <div class="chart-link">View Chart</div>
+            </a>
+
+            <a href="vertically-stacked-bar-chart.html" class="chart-card">
+                <div class="chart-icon">📉</div>
+                <h2 class="chart-title">Vertically Stacked Bar Chart</h2>
+                <p class="chart-description">
+                    Vertical stacked bar chart showing layered data visualization. 
+                    Ideal for displaying multi-dimensional categorical data.
+                </p>
+                <span class="chart-tag">Stacked</span>
+                <div class="chart-link">View Chart</div>
+            </a>
+
+            <a href="canada-map-charts/index.html" class="chart-card">
+                <div class="chart-icon">🗺️</div>
+                <h2 class="chart-title">Canada COVID-19 Map</h2>
+                <p class="chart-description">
+                    Interactive map visualization of COVID-19 cases across Canadian provinces. 
+                    Click on provinces to explore detailed area charts and stacked visualizations.
+                </p>
+                <span class="chart-tag">Interactive Map</span>
+                <div class="chart-link">View Chart</div>
+            </a>
+
+            <a href="cholera-map-charts/index.html" class="chart-card">
+                <div class="chart-icon">🏛️</div>
+                <h2 class="chart-title">London's Cholera Epidemic</h2>
+                <p class="chart-description">
+                    Historical visualization of the 1854 London cholera outbreak. 
+                    Explore death patterns, demographics, and the relationship between 
+                    water pumps and the epidemic.
+                </p>
+                <span class="chart-tag">Historical</span>
+                <div class="chart-link">View Chart</div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+
